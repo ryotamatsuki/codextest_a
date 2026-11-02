@@ -1,6 +1,11 @@
 const API_BASE = "https://www.googleapis.com/youtube/v3";
 const DAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
+// Escape untrusted YouTube API titles before putting them in HTML templates.
+const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[ch]));
+const safeVideoId = (value) => /^[A-Za-z0-9_-]{11}$/.test(String(value ?? '')) ? String(value) : '';
+
+
 const apiKeyInput = document.querySelector("#apiKey");
 const channelInput = document.querySelector("#channelInput");
 const maxVideosSelect = document.querySelector("#maxVideos");
@@ -212,7 +217,7 @@ function renderInsights(analysis) {
       : "トップ動画情報は取得できませんでした。",
   ];
 
-  insightsEl.innerHTML = items.map((item) => `<li>${item}</li>`).join("");
+  insightsEl.innerHTML = items.map((item) => `<li>${escapeHTML(item)}</li>`).join("");
   insightsPanel.classList.remove("hidden");
 }
 
@@ -230,7 +235,7 @@ function renderBarChart(targetEl, rows) {
       const width = Math.max((stat.avgViews / max) * 100, 1);
       return `
         <div class="bar-row">
-          <span>${label}</span>
+          <span>${escapeHTML(label)}</span>
           <div class="bar" style="width:${width}%"></div>
           <span>${formatNumber(Math.round(stat.avgViews))}</span>
         </div>
@@ -244,7 +249,7 @@ function renderTable(videos) {
     .map(
       (video) => `
       <tr>
-        <td><a href="https://www.youtube.com/watch?v=${video.id}" target="_blank" rel="noreferrer">${video.title}</a></td>
+        <td>${safeVideoId(video.id) ? `<a href="https://www.youtube.com/watch?v=${safeVideoId(video.id)}" target="_blank" rel="noopener noreferrer">${escapeHTML(video.title)}</a>` : escapeHTML(video.title)}</td>
         <td>${video.publishedAt.toLocaleDateString("ja-JP")}</td>
         <td>${formatNumber(video.views)}</td>
         <td>${formatNumber(video.likes)}</td>
